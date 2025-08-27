@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ultra Animated Name Styler</title>
+  <meta name="description" content="Type your name and cycle through 100+ fancy font styles with ultra animations." />
+  <style>
+    :root{
+      --bg1:#0f1020;
+      --bg2:#1a0f2f;
+      --accent:#9b5cff;
+      --accent2:#00e0ff;
+      --text:#eaeaf7;
+      --muted:#b7b8d6;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 800px at 20% 10%,rgba(155,92,255,.15),transparent 60%), radial-gradient(900px 700px at 90% 80%,rgba(0,224,255,.12),transparent 60%), linear-gradient(120deg,var(--bg1),var(--bg2));color:var(--text);overflow-x:hidden}
+
+    /* Entry Splash Overlay */
+    .splash{
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background: radial-gradient(1000px 800px at 50% 50%, rgba(155,92,255,.12), transparent 70%), #0a0b16;
+      z-index:9999;
+      overflow:hidden;
+    }
+    .splash .glints{
+      position:absolute; inset:-10%; pointer-events:none;
+      background:
+        radial-gradient(2px 2px at 20% 30%,rgba(255,255,255,.35),transparent 60%),
+        radial-gradient(1.5px 1.5px at 70% 60%,rgba(255,255,255,.25),transparent 60%),
+        radial-gradient(1.5px 1.5px at 40% 80%,rgba(255,255,255,.25),transparent 60%),
+        radial-gradient(1px 1px at 85% 20%,rgba(255,255,255,.25),transparent 60%);
+      animation: drift 40s linear infinite;
+      filter: drop-shadow(0 0 6px rgba(155,92,255,.5));
+    }
+    .splash-inner{
+      display:flex; flex-direction:column; align-items:center; gap:16px; padding:24px;
+      text-align:center;
+    }
+    .type{
+      font-weight:800; letter-spacing:.6px;
+      font-size:clamp(22px, 4vw, 40px);
+      background: linear-gradient(90deg, #9b5cff, #00e0ff);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,.45));
+      white-space:pre-wrap;
+    }
+    .cursor{
+      width:2px; height:1.1em; background:#9b5cff; display:inline-block; vertical-align:bottom;
+      animation: blink 1s steps(1) infinite;
+      margin-left:4px;
+    }
+    @keyframes blink{ 50%{opacity:0}}
+    .subtle{
+      color:#cfd2ff; opacity:.85; font-size:14px;
+    }
+    .progress{
+      position:relative; width:min(420px, 70vw); height:6px; border-radius:999px; overflow:hidden;
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+      box-shadow: inset 0 0 18px rgba(0,0,0,.35);
+    }
+    .progress > span{
+      position:absolute; inset:0 100% 0 0; background:linear-gradient(90deg, rgba(155,92,255,.9), rgba(0,224,255,.9));
+      animation: loadbar 2.2s ease-in-out forwards;
+    }
+    @keyframes loadbar{ to{ inset:0 0 0 0 } }
+
+    /* Background particle field */
+    .stars, .twinkles{
+      position:fixed; inset:0; pointer-events:none; z-index:-2;
+      background:
+        radial-gradient(2px 2px at 20% 30%,rgba(255,255,255,.35),transparent 60%),
+        radial-gradient(1.5px 1.5px at 70% 60%,rgba(255,255,255,.25),transparent 60%),
+        radial-gradient(1.5px 1.5px at 40% 80%,rgba(255,255,255,.25),transparent 60%),
+        radial-gradient(1px 1px at 85% 20%,rgba(255,255,255,.25),transparent 60%);
+      animation: drift 40s linear infinite;
+    }
+    .twinkles{ filter: drop-shadow(0 0 6px rgba(155,92,255,.6)); animation-duration: 55s; mix-blend-mode:screen }
+    @keyframes drift{ 0%{transform:translateY(0)} 50%{transform:translateY(-20px)} 100%{transform:translateY(0)} }
+
+    /* Floating gradient blobs */
+    .blob{
+      position:fixed; width:500px; height:500px; border-radius:50%;
+      background:conic-gradient(from 0deg, rgba(155,92,255,.35), rgba(0,224,255,.35), rgba(155,92,255,.35));
+      filter: blur(60px);
+      animation: float 18s ease-in-out infinite;
+      z-index:-1;
+    }
+    .blob.b2{ width:600px;height:600px; left:auto; right:-120px; top:40%; animation-duration:24s; animation-delay:-6s; opacity:.7}
+    .blob.b1{ left:-160px; top:10%; opacity:.6}
+    @keyframes float{ 0%,100%{ transform:translateY(0) translateX(0) rotate(0deg)} 50%{ transform:translateY(-40px) translateX(20px) rotate(30deg)} }
+
+    /* Glass card */
+    .wrap{ max-width:980px; margin:6vh auto; padding:24px; opacity:0; transform: translateY(12px) scale(.98); transition: opacity .5s ease, transform .5s ease }
+    .wrap.ready{ opacity:1; transform: none }
+    .card{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 40px rgba(0,0,0,.35), inset 0 0 40px rgba(155,92,255,.08);
+      border-radius:20px; padding:28px;
+      backdrop-filter: blur(10px);
+      position:relative; overflow:hidden;
+    }
+    .glow{
+      content:""; position:absolute; inset:-2px; border-radius:22px;
+      background: conic-gradient(from 180deg at 50% 50%, rgba(155,92,255,.35), rgba(0,224,255,.35), rgba(155,92,255,.35));
+      filter: blur(30px); opacity:.35; z-index:-1;
+      animation: spin 12s linear infinite;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg)} }
+
+    h1{margin:0 0 10px; font-weight:800; letter-spacing:.5px}
+    p.sub{margin:0 0 20px; color:var(--muted)}
+    .row{display:flex; gap:12px; flex-wrap:wrap}
+    input[type="text"]{
+      flex:1 1 320px; padding:14px 16px; border-radius:12px; border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08); color:var(--text); font-size:16px; outline:none;
+      transition: border .2s, box-shadow .2s, transform .1s;
+    }
+    input[type="text"]:focus{ border-color: rgba(0,224,255,.6); box-shadow: 0 0 0 4px rgba(0,224,255,.18)}
+    .btn{
+      padding:12px 16px; border-radius:12px; border:1px solid rgba(255,255,255,.18);
+      background:linear-gradient(180deg, rgba(155,92,255,.9), rgba(105,58,210,.9));
+      color:#fff; cursor:pointer; font-weight:700; letter-spacing:.3px;
+      box-shadow: 0 10px 25px rgba(155,92,255,.35);
+      transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
+      user-select:none;
+    }
+    .btn:hover{ filter:brightness(1.08) saturate(1.05) }
+    .btn:active{ transform: translateY(1px) scale(.99) }
+    .btn.alt{
+      background:linear-gradient(180deg, rgba(0,224,255,.9), rgba(0,170,210,.9));
+      box-shadow: 0 10px 25px rgba(0,224,255,.35);
+    }
+    .btn.ghost{
+      background:rgba(255,255,255,.06);
+      border:1px dashed rgba(255,255,255,.25);
+      color:var(--text)
+    }
+
+    /* Display area */
+    .display{
+      margin-top:18px; padding:22px; border-radius:16px;
+      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
+      min-height:140px; position:relative; overflow:hidden;
+    }
+    .style-text{
+      font-size: clamp(24px, 6vw, 52px);
+      line-height:1.25; text-align:center; word-break:break-word; white-space:pre-wrap;
+      opacity:0; transform: translateY(8px) scale(.98);
+      animation: fadeIn .35s ease forwards;
+      text-shadow: 0 2px 14px rgba(0,0,0,.35);
+      user-select: text;
+    }
+    @keyframes fadeIn{
+      to{ opacity:1; transform: translateY(0) scale(1) }
+    }
+
+    /* Footer */
+    .foot{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px; color:var(--muted); font-size:14px }
+    .count{ font-weight:700; color:#cdd1ff }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; opacity:.9 }
+
+    /* Mobile tweaks */
+    @media (max-width:640px){
+      .wrap{ padding:14px }
+      .row{ gap:8px }
+      .btn{ flex:1 1 auto }
+    }
+  </style>
+</head>
+<body>
+  <!-- Entry Splash -->
+  <div class="splash" id="splash">
+    <div class="glints"></div>
+    <div class="splash-inner">
+      <div class="type" id="typeText"></div><span class="cursor"></span>
+      <div class="subtle">Loading experience…</div>
+      <div class="progress"><span></span></div>
+    </div>
+  </div>
+
+  <!-- Background animations -->
+  <div class="stars"></div>
+  <div class="twinkles"></div>
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+
+  <div class="wrap" id="app">
+    <div class="card">
+      <div class="glow"></div>
+
+      <h1>Ultra Animated Name Styler</h1>
+      <p class="sub">Apna naam daalein, Submit dabayein, aur 100+ fancy styles me dekhein. Next/Previous se aage‑peeche jaayein.</p>
+
+      <div class="row">
+        <input id="nameInput" type="text" placeholder="Yahaan apna naam likhein... (e.g., boss, Anuska)" />
+        <button id="submitBtn" class="btn">Submit</button>
+        <button id="prevBtn" class="btn ghost">Previous</button>
+        <button id="nextBtn" class="btn alt">Next</button>
+      </div>
+
+      <div id="display" class="display"></div>
+
+      <div class="foot">
+        <div><span class="count" id="counter">0</span> styles</div>
+        <div class="mono" id="copyHint">Tip: text par double‑click karke copy karein</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Entry Typewriter: "Powered by Sudip" =====
+    (function entryAnimation(){
+      const text = "Powered by Sudip";
+      const el = document.getElementById('typeText');
+      const splash = document.getElementById('splash');
+      const app = document.getElementById('app');
+      let i = 0;
+
+      function typeNext(){
+        if(i <= text.length){
+          el.textContent = text.slice(0,i);
+          i++;
+          setTimeout(typeNext, i < text.length ? 70 : 400);
+        }else{
+          // small pause then fade out splash
+          setTimeout(()=>{
+            splash.style.transition = 'opacity .6s ease, transform .6s ease';
+            splash.style.opacity = '0';
+            splash.style.transform = 'scale(1.02)';
+            setTimeout(()=>{
+              splash.style.display = 'none';
+              app.classList.add('ready');
+            }, 650);
+          }, 350);
+        }
+      }
+      // start typing after a short delay
+      setTimeout(typeNext, 250);
+    })();
+
+    // ===== Core App =====
+    const base = {
+      latinUpper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      latinLower: "abcdefghijklmnopqrstuvwxyz",
+      digits: "0123456789"
+    };
+
+    function mapWithTables(str, tables){
+      return str.split('').map(ch=>{
+        const u = base.latinUpper.indexOf(ch);
+        if(u>-1 && tables.upper){ return tables.upper[u] }
+        const l = base.latinLower.indexOf(ch);
+        if(l>-1 && tables.lower){ return tables.lower[l] }
+        const d = base.digits.indexOf(ch);
+        if(d>-1 && tables.digits){ return tables.digits[d] }
+        return ch;
+      }).join('');
+    }
+
+    const tables = {
+      mathBold:{
+        upper:[..."𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙"],
+        lower:[..."𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳"],
+        digits:[..."𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗"]
+      },
+      mathItalic:{
+        upper:[..."𝐴𝐵𝐶𝐷𝐸𝐹𝐺𝐻𝐼𝐽𝐾𝐿𝑀𝑁𝑂𝑃𝑄𝑅𝑆𝑇𝑈𝑉𝑊𝑋𝑌𝑍"],
+        lower:[..."𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧"]
+      },
+      mathBoldItalic:{
+        upper:[..."𝑨𝑩𝑪𝑫𝑬𝑭𝑮𝑯𝑰𝑱𝑲𝑳𝑴𝑵𝑶𝑷𝑸𝑹𝑺𝑻𝑼𝑽𝑾𝑿𝒀𝒁"],
+        lower:[..."𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛"]
+      },
+      mathScript:{
+        upper:[..."𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵"],
+        lower:[..."𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒉𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏"]
+      },
+      mathBoldScript:{
+        upper:[..."𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩"],
+        lower:[..."𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃"]
+      },
+      mathFraktur:{
+        upper:[..."𝔄𝔅ℭ𝔇𝔈𝔉𝔊ℌℑ𝔍𝔎𝔏𝔐𝔑𝔒𝔓𝔔ℜ𝔖𝔗𝔘𝔙𝔚𝔛𝔜ℨ"],
+        lower:[..."𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷"]
+      },
+      mathBoldFraktur:{
+        upper:[..."𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅"],
+        lower:[..."𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟"]
+      },
+      mathDouble:{
+        upper:[..."𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ"],
+        lower:[..."𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫"],
+        digits:[..."𝟘𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡"]
+      },
+      sansSerif:{
+        upper:[..."𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹"],
+        lower:[..."𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓"]
+      },
+      sansSerifBold:{
+        upper:[..."𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭"],
+        lower:[..."𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇"],
+        digits:[..."𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟯𝟴𝟵".replace('3','6')] /* will fix below */
+      },
+      sansSerifItalic:{
+        upper:[..."𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜𝘝𝘞𝘟𝘠𝘡"],
+        lower:[..."𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻"]
+      },
+      sansSerifBoldItalic:{
+        upper:[..."𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕"],
+        lower:[..."𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯"]
+      },
+      monospace:{
+        upper:[..."𝙰𝙱𝙲𝙳𝙴𝙁𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉"],
+        lower:[..."𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣"],
+        digits:[..."𝟶𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿"]
+      }
+    };
+    // Fix bold digits correctly
+    tables.sansSerifBold.digits = [..."𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟕𝟴𝟵"];
+
+    const wrappers = [
+      (t)=>`★彡 ${t} 彡★`,
+      (t)=>`✦ ${t} ✦`,
+      (t)=>`❖ ${t} ❖`,
+      (t)=>`✩⃛ ${t} ✩⃛`,
+      (t)=>`𓂃❛ ${t} 𓂃ֶꪳ ִֶ✨`,
+      (t)=>`『 ${t} 』`,
+      (t)=>`【 ${t} 】`,
+      (t)=>`➶ ${t} ➷`,
+      (t)=>`◥▧ ${t} ▧◤`,
+      (t)=>`꧁ ${t} ꧂`,
+      (t)=>`༺ ${t} ༻`,
+      (t)=>`•·.·• ${t} •·.·•`,
+      (t)=>`♡⸝⸝ ${t} ⸝⸝♡`,
+      (t)=>`✿ ${t} ✿`,
+      (t)=>`⟆ ${t} ⟅`,
+      (t)=>`ꜝ ${t} ꜞ`,
+      (t)=>`—̶ ${t} —̶`,
+      (t)=>`⌗ ${t} ⌗`,
+      (t)=>`♛ ${t} ♛`,
+      (t)=>`✧ ${t} ✧`
+    ];
+
+    const transforms = {
+      spaced: (s)=> s.split('').join(' '),
+      wide: (s)=> s.split('').join('  '),
+      upper: (s)=> s.toUpperCase(),
+      lower: (s)=> s.toLowerCase(),
+      bubble: (s)=> s.replace(/[A-Z]/g, c => String.fromCodePoint(0x1F130 + (c.charCodeAt(0)-65))),
+      smallcaps: (s)=>{
+        const map = {a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ғ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'ǫ',r:'ʀ',s:'s',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ'};
+        return s.split('').map(ch=> map[ch.toLowerCase()] || ch).join('');
+      },
+      flip: (s)=>{
+        const map = {'a':'ɐ','b':'q','c':'ɔ','d':'p','e':'ǝ','f':'ɟ','g':'ɓ','h':'ɥ','i':'ᴉ','j':'ɾ','k':'ʞ','l':'l','m':'ɯ','n':'u','o':'o','p':'d','q':'b','r':'ɹ','s':'s','t':'ʇ','u':'n','v':'ʌ','w':'ʍ','x':'x','y':'ʎ','z':'z','A':'∀','B':'𐐒','C':'Ɔ','D':'◖','E':'Ǝ','F':'Ⅎ','G':'פ','H':'H','I':'I','J':'ſ','K':'ʞ','L':'˥','M':'W','N':'N','O':'O','P':'Ԁ','Q':'Ό','R':'ᴚ','S':'S','T':'⊥','U':'∩','V':'Λ','W':'M','X':'X','Y':'⅄','Z':'Z','1':'Ɩ','2':'ᄅ','3':'Ɛ','4':'ㄣ','5':'ϛ','6':'9','7':'ㄥ','8':'8','9':'6','0':'0'};
+        return s.split('').reverse().map(ch=>map[ch]||ch).join('');
+      }
+    };
+
+    // Build style functions (100+)
+    const styleFns = [];
+    const mappedSets = [
+      tables.mathBold, tables.mathItalic, tables.mathBoldItalic, tables.mathScript, tables.mathBoldScript,
+      tables.mathFraktur, tables.mathBoldFraktur, tables.mathDouble, tables.sansSerif, tables.sansSerifBold,
+      tables.sansSerifItalic, tables.sansSerifBoldItalic, tables.monospace
+    ];
+    mappedSets.forEach(set=> styleFns.push((name)=>mapWithTables(name,set)));
+    wrappers.forEach(w=> mappedSets.forEach(set=> styleFns.push((name)=>w(mapWithTables(name,set)))));
+    wrappers.forEach(w=> styleFns.push((name)=>w(name)));
+    const transList = [transforms.spaced, transforms.wide, transforms.upper, transforms.lower, transforms.smallcaps, transforms.bubble, transforms.flip];
+    transList.forEach(tr=> styleFns.push((name)=>tr(name)));
+    wrappers.forEach(w=> transList.forEach(tr=> styleFns.push((name)=>w(tr(name)))));
+
+    // State
+    let styles = [];
+    let idx = 0;
+
+    const nameInput = document.getElementById('nameInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const display = document.getElementById('display');
+    const counter = document.getElementById('counter');
+
+    function render(){
+      display.innerHTML = '';
+      if(!styles.length){ counter.textContent = '0'; return; }
+      const txt = styles[idx % styles.length];
+      const el = document.createElement('div');
+      el.className = 'style-text';
+      el.textContent = txt;
+      display.appendChild(el);
+      counter.textContent = styles.length.toString();
+    }
+
+    function generate(name){
+      const clean = (name || '').trim();
+      if(!clean){ styles = []; idx = 0; render(); return; }
+      const uniq = new Set();
+      const out = [];
+      for(const fn of styleFns){
+        try{
+          const s = fn(clean);
+          if(s && !uniq.has(s)){
+            uniq.add(s);
+            out.push(s);
+          }
+        }catch(e){}
+      }
+      // Shuffle
+      for(let i=out.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [out[i],out[j]] = [out[j],out[i]];
+      }
+      styles = out;
+      idx = 0;
+      render();
+    }
+
+    submitBtn.addEventListener('click', ()=> generate(nameInput.value));
+    nextBtn.addEventListener('click', ()=>{ if(styles.length){ idx=(idx+1)%styles.length; render(); }});
+    prevBtn.addEventListener('click', ()=>{ if(styles.length){ idx=(idx-1+styles.length)%styles.length; render(); }});
+    nameInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ generate(nameInput.value) } });
+
+    // No forced demo value — user input drives output
+    // nameInput.value = 'Sanan'; // removed
+    // generate(nameInput.value); // removed
+
+    // Optional: small UX — focus input after splash
+    window.addEventListener('load', ()=>{
+      setTimeout(()=> nameInput?.focus?.(), 1400);
+    });
+
+    // Double-click to copy
+    display.addEventListener('dblclick', ()=>{
+      const sel = display.textContent;
+      if(!sel) return;
+      navigator.clipboard.writeText(sel).then(()=>{
+        const old = document.getElementById('copyHint').textContent;
+        document.getElementById('copyHint').textContent = 'Copied!';
+        setTimeout(()=>{ document.getElementById('copyHint').textContent = old; }, 1000);
+      }).catch(()=>{});
+    });
+  </script>
+</body>
+</html>
